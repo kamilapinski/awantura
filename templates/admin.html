@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Admina - Awantura</title>
+    <style>
+        body { font-family: sans-serif; background: #e0e0e0; padding: 20px; }
+        .admin-container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .section { padding: 15px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 5px; margin-bottom: 15px;}
+        .team-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 10px; background: white; border-left: 8px solid #333; }
+        .checkbox-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;}
+        select, input[type="number"], input[type="text"] { padding: 8px; font-size: 15px; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
+        button { padding: 8px 12px; font-size: 14px; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; margin-top: 5px; }
+        .btn-bid { background: #ffcccc; } .btn-add { background: #ccffcc; } .btn-win { background: #fff0b3; }
+        .btn-vabank { background: #e60000; color: white; } .btn-wrong { background: #555; color: white; }
+        .btn-start { background: #0066ff; color: white; width: 100%; padding: 15px; font-size: 16px;}
+        .db-data { display: none; }
+    </style>
+</head>
+<body>
+    <div id="db-data" class="db-data">{{ categories | tojson }}</div>
+
+    <div class="admin-container">
+        <h1>⚙️ Panel Sterowania</h1>
+        
+        <div class="section">
+            <h3>1. Ustawienia gry</h3>
+            <div class="checkbox-grid">
+                <label><input type="checkbox" class="team-check" value="niebiescy" checked> Niebiescy</label>
+                <label><input type="checkbox" class="team-check" value="zieloni" checked> Zieloni</label>
+                <label><input type="checkbox" class="team-check" value="zolci" checked> Żółci</label>
+                <label><input type="checkbox" class="team-check" value="czerwoni"> Czerwoni</label>
+                <label><input type="checkbox" class="team-check" value="pomaranczowi"> Pomarańczowi</label>
+                <label><input type="checkbox" class="team-check" value="fioletowi"> Fioletowi</label>
+                <label><input type="checkbox" class="team-check" value="rozowi"> Różowi</label>
+                <label><input type="checkbox" class="team-check" value="mistrzowie"> 👑 Mistrzowie</label>
+            </div>
+            Startowe: <input type="number" id="start-amount" value="5000" style="width: 100px;">
+            <button class="btn-start" style="width:auto;" onclick="setupGame()">Odpal nową grę</button>
+        </div>
+
+        <div class="grid-layout">
+            <div>
+                <div class="section">
+                    <h3>2. Losowanie Kategorii</h3>
+                    <p style="margin-top:0;">Wylosowano: <strong id="current-cat-display" style="color:#ff8800; font-size:18px;">Brak</strong></p>
+                    <button class="btn-start" style="background:#ff8800;" onclick="spinWheel()">🎲 Wylosuj losową kategorię z puli</button>
+                    <hr style="margin:15px 0;">
+                    
+                    <h3>3. Start rundy (Wpisowe)</h3>
+                    Wpisowe: <input type="number" id="entry-fee" value="200" style="width: 100px;">
+                    <button class="btn-start" onclick="startRound()">💰 Pobierz wpisowe i start</button>
+                    <hr style="margin:15px 0;">
+                    
+                    <h3>4. Koniec licytacji - Pokaż pytanie</h3>
+                    <!-- Ten select uzupełni się sam po losowaniu -->
+                    <select id="question-select"><option>Wylosuj najpierw kategorię...</option></select>
+                    <button class="btn-start" style="background:#00cc00;" onclick="showQuestion()">👁️ Wyświetl to pytanie</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="section">
+                    <h3>5. Licytacja (Pula: <span id="admin-pool" style="color:red; font-size:24px;">0</span>)</h3>
+                    <div id="active-teams-controls">Oczekuję na start...</div>
+                    <button class="btn-wrong" style="width:100%; padding:15px; margin-top:20px;" onclick="wrongAnswer()">❌ Zła odpowiedź (Zatrzymaj pulę)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const db = JSON.parse(document.getElementById('db-data').textContent);
+        const qSelect = document.getElementById('question-select');
+
+        const teamNames = {
+            'niebiescy': 'Niebiescy', 'zieloni': 'Zieloni', 'zolci': 'Żółci', 
+            'czerwoni': 'Czerwoni', 'pomaranczowi': 'Pomarańczowi', 
+            'fioletowi': 'Fioletowi', 'rozowi': 'Różowi', 'mistrzowie': 'Mistrzowie'
+        };
+
+        function setupGame() {
+            const selected = Array.from(document.querySelectorAll('.team-check:checked')).map(cb => cb.value);
+            socket.emit('admin_action', { action: 'setup', teams: selected, amount: document.getElementById('start-amount').value });
+        }
+
+        function spinWheel() { socket.emit('admin_action', { action: 'spin_wheel' }); }
+        function startRound() { socket.emit('admin_action', { action: 'start_round', amount: document.getElementById('entry-fee').value }); }
+        function showQuestion() { socket.emit('admin_action', { action: 'show_question', question: qSelect.value }); }
+        function wrongAnswer() { socket.emit('admin_action', { action: 'wrong_answer' }); }
+
+        function sendAction(actionType, teamColor) {
+            let val = 0;
+            if(actionType === 'bid' || actionType === 'add') {
+                val = document.getElementById('amount-' + teamColor).value;
+            }
+            socket.emit('admin_action', { action: actionType, team: teamColor, amount: val });
+        }
+
+        socket.on('update_state', function(gameState) {
+            document.getElementById('admin-pool').innerText = gameState.pool;
+            document.getElementById('current-cat-display').innerText = gameState.current_category;
+
+            // Automatyczne wczytanie pytań dla wylosowanej kategorii
+            if (db[gameState.current_category]) {
+                qSelect.innerHTML = '';
+                db[gameState.current_category].forEach(q => qSelect.add(new Option(q, q)));
+            } else {
+                qSelect.innerHTML = '<option>Wylosuj najpierw kategorię...</option>';
+            }
+
+            const container = document.getElementById('active-teams-controls');
+            container.innerHTML = '';
+            for (const [teamId, score] of Object.entries(gameState.teams)) {
+                const bid = gameState.bids[teamId] || 0;
+                const suggested = bid > 0 ? bid + 100 : 100;
+                container.innerHTML += `
+                    <div class="team-controls">
+                        <div style="width: 130px;">
+                            <strong>${teamNames[teamId]}</strong><br>
+                            Konto: <b>${score}</b><br>Stół: <b style="color:red">${bid}</b>
+                        </div>
+                        <div style="width:90px">
+                            <input type="number" id="amount-${teamId}" value="${suggested}">
+                            <button class="btn-vabank" style="width:100%" onclick="sendAction('all_in', '${teamId}')">VABANK</button>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px; margin-left:10px;">
+                            <button class="btn-bid" onclick="sendAction('bid', '${teamId}')">Podbij</button>
+                            <button class="btn-add" onclick="sendAction('add', '${teamId}')">+100</button>
+                            <button class="btn-win" onclick="sendAction('win_pool', '${teamId}')">🏆 Wygrywa</button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

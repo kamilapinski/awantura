@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Awantura o kasę - Widownia</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- EKRAN STARTOWY / LOGO -->
+        <div id="start-screen" class="start-screen hidden">
+            <h1 class="game-title">AWANTURA O KASĘ</h1>
+            <h2 class="game-subtitle">Liturgiczna Służba Ołtarza<br>Archidiecezji Białostockiej</h2>
+            <div class="start-info">Oczekiwanie na rozpoczęcie gry przez administratora...</div>
+        </div>
+
+        <!-- GŁÓWNA GRA -->
+        <div id="game-content" class="game-content">
+            <div class="header-section">
+                <!-- WIELKIE KOŁO FORTUNY -->
+                <div id="wheel-wrapper" class="wheel-wrapper hidden">
+                    <div class="spinning-title">🎲 LOSOWANIE KATEGORII 🎲</div>
+                    <div class="wheel-container-inner">
+                        <div class="wheel-pointer">▼</div>
+                        <div id="fortune-wheel" class="fortune-wheel"></div>
+                    </div>
+                </div>
+                
+                <!-- WYLOSOWANA KATEGORIA / PYTANIE -->
+                <div id="question-box" class="question-box hidden">
+                    <div id="category-title" class="category-title">KATEGORIA</div>
+                    <h1 id="question" class="question-text"></h1>
+                </div>
+            </div>
+            
+            <!-- PULA NA STOLE -->
+            <div id="pool-section" class="pool-section">
+                <h2>PULA NA STOLE</h2>
+                <div id="pool" class="pool-amount">0</div>
+            </div>
+
+            <!-- DRUŻYNY -->
+            <div id="teams-container" class="teams-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

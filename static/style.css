@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+
+body { background-color: #050505; color: #ffffff; font-family: 'Montserrat', sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; overflow: hidden; }
+.container { width: 95%; height: 95%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+
+.header-section { min-height: 120px; display: flex; justify-content: center; align-items: center; width: 100%; position: relative; flex-direction: column; }
+
+/* NAPIS NAD KOŁEM W JEDNEJ LINII */
+.spinning-title {
+    font-size: 2.2vw;
+    color: #ffcc00;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    text-shadow: 0 0 20px rgba(255, 204, 0, 0.8);
+    animation: titlePulse 1s infinite alternate;
+}
+@keyframes titlePulse {
+    0% { transform: scale(1); opacity: 0.85; }
+    100% { transform: scale(1.03); opacity: 1; }
+}
+
+/* OGROMNE, IDEALNIE OKRĄGŁE KOŁO FORTUNY */
+.wheel-wrapper {
+    position: relative;
+    width: 560px;
+    height: 560px;
+    margin: 5px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.wheel-container-inner {
+    position: relative;
+    width: 520px;
+    height: 520px;
+}
+.wheel-pointer {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 45px;
+    color: #ffcc00;
+    z-index: 100;
+    text-shadow: 0 0 15px rgba(255, 204, 0, 0.9);
+}
+.fortune-wheel {
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    border: 10px solid #ffcc00;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(255, 204, 0, 0.6);
+    background: #111;
+    box-sizing: border-box;
+}
+
+/* Układ segmentów koła */
+.wheel-slice {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    transform-origin: 100% 100%;
+    left: 0;
+    top: 0;
+    border-right: 1px solid rgba(255,255,255,0.25);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+.slice-text {
+    position: absolute;
+    left: 60px;
+    top: 55%;
+    transform-origin: left center;
+    font-size: 11px;
+    font-weight: 900;
+    color: #ffffff;
+    width: 160px;
+    text-align: left;
+    text-shadow: 1px 1px 3px #000, 0 0 6px #000;
+}
+
+/* Wyraziste kolory segmentów */
+.wheel-slice:nth-child(1) { background-color: #0055ff; }
+.wheel-slice:nth-child(2) { background-color: #00aa00; }
+.wheel-slice:nth-child(3) { background-color: #cc9900; }
+.wheel-slice:nth-child(4) { background-color: #cc0000; }
+.wheel-slice:nth-child(5) { background-color: #cc5500; }
+.wheel-slice:nth-child(6) { background-color: #7700cc; }
+.wheel-slice:nth-child(7) { background-color: #cc0088; }
+.wheel-slice:nth-child(8) { background-color: #0088cc; }
+.wheel-slice:nth-child(9) { background-color: #444444; }
+.wheel-slice:nth-child(10) { background-color: #88cc00; }
+
+/* SEKCJA KATEGORII / PYTANIA PO WYLOSOWANIU */
+.question-box { width: 100%; padding: 10px; }
+.category-title { font-size: 1.8vw; color: #ff8800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+.question-text { font-size: 2.8vw; text-transform: uppercase; text-shadow: 2px 2px 10px rgba(255,255,255,0.3); color: #fff; margin: 0; }
+
+.pool-section { margin: 5px 0; }
+.pool-section h2 { font-size: 1.3vw; color: #aaaaaa; margin: 0 0 3px 0; }
+.pool-amount { font-size: 7.5vw; color: #ff3333; text-shadow: 0px 0px 30px rgba(255, 51, 51, 0.8); line-height: 1; margin-bottom: 5px;}
+.teams-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; width: 100%; margin-bottom: 5px; }
+.team { flex: 1 1 calc(22% - 20px); min-width: 180px; padding: 8px 0; border-radius: 12px; background: #0f0f0f; border: 4px solid #333; }
+.team h2 { font-size: 1.2vw; margin: 0 0 5px 0; letter-spacing: 1px; }
+.score { font-size: 2.8vw; margin-bottom: 3px; }
+
+.hidden { display: none !important; }
+
+/* Kolory drużyn */
+.niebiescy { border-color: #0066ff; box-shadow: 0 0 15px rgba(0,102,255,0.4); } .niebiescy h2 { color: #3388ff; }
+.zieloni { border-color: #00cc00; box-shadow: 0 0 15px rgba(0,204,0,0.4); } .zieloni h2 { color: #33ff33; }
+.zolci { border-color: #ffcc00; box-shadow: 0 0 15px rgba(255,204,0,0.4); } .zolci h2 { color: #ffe600; }
+.czerwoni { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.4); } .czerwoni h2 { color: #ff4444; }
+.pomaranczowi { border-color: #ff8800; box-shadow: 0 0 15px rgba(255,136,0,0.4); } .pomaranczowi h2 { color: #ffaa33; }
+.fioletowi { border-color: #9900ff; box-shadow: 0 0 15px rgba(153,0,255,0.4); } .fioletowi h2 { color: #bb66ff; }
+.rozowi { border-color: #ff00aa; box-shadow: 0 0 15px rgba(255,0,170,0.4); } .rozowi h2 { color: #ff66cc; }
+.mistrzowie { border-color: #ffffff; box-shadow: 0 0 20px rgba(255,255,255,0.6); } .mistrzowie h2 { color: #ffffff; }
+
+.bid-info { font-size: 1vw; color: #ffeb3b; margin-top: 2px; background: rgba(0, 0, 0, 0.4); padding: 3px 6px; border-radius: 5px; display: inline-block; }
+.bid-info strong { font-size: 1.3vw; font-weight: 900; }
+.bid-inactive { opacity: 0.3; color: #aaaaaa; }
+
+/* EKRAN STARTOWY / INTRO */
+.start-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    text-align: center;
+    background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);
+}
+.game-title {
+    font-size: 6vw;
+    color: #ff3333;
+    text-transform: uppercase;
+    text-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
+    margin: 0 0 20px 0;
+    letter-spacing: 4px;
+}
+.game-subtitle {
+    font-size: 2.5vw;
+    color: #ffcc00;
+    text-transform: uppercase;
+    line-height: 1.4;
+    text-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+    margin: 0 0 40px 0;
+    letter-spacing: 2px;
+}
+.start-info {
+    font-size: 1.2vw;
+    color: #888;
+    letter-spacing: 1px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
