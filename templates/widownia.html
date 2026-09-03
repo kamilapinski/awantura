@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Awantura o kasę - Widownia</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
 </head>
 <body>
     <div class="container">
@@ -30,6 +30,10 @@
                 <div id="question-box" class="question-box hidden">
                     <div id="category-title" class="category-title">KATEGORIA</div>
                     <h1 id="question" class="question-text"></h1>
+                    <div id="answer-box" class="answer-box hidden">
+                        <span class="answer-label">ODPOWIEDŹ:</span>
+                        <span id="answer-text" class="answer-text"></span>
+                    </div>
                 </div>
             </div>
             
@@ -45,6 +49,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
 </body>
 </html>

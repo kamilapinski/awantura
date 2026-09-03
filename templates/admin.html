@@ -16,10 +16,84 @@
         .btn-vabank { background: #e60000; color: white; } .btn-wrong { background: #555; color: white; }
         .btn-start { background: #0066ff; color: white; width: 100%; padding: 15px; font-size: 16px;}
         .db-data { display: none; }
+        
+        /* Modal potwierdzenia */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-box {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            animation: modalScaleIn 0.2s ease-out;
+            border-top: 6px solid #8800cc;
+        }
+        @keyframes modalScaleIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            padding: 10px 18px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+        .btn-confirm {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-confirm:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
     <div id="db-data" class="db-data">{{ categories | tojson }}</div>
+
+    <!-- OKIENKO POTWIERDZENIA -->
+    <div id="confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <h2 style="margin-top: 0; color: #222; font-size: 20px;">⚠️ Czy na pewno pokazać odpowiedź?</h2>
+            <p style="font-size: 14px; color: #555; margin: 8px 0 14px 0;">Poprawna odpowiedź stanie się natychmiast widoczna dla wszystkich na ekranie widowni.</p>
+            
+            <div style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 12px; margin: 15px 0; text-align: left;">
+                <div style="font-size: 11px; color: #777; font-weight: bold; text-transform: uppercase;">Pytanie:</div>
+                <div id="modal-question-text" style="font-size: 15px; color: #222; font-weight: bold; margin-bottom: 10px;"></div>
+                <div style="font-size: 11px; color: #007700; font-weight: bold; text-transform: uppercase;">Odpowiedź do odsłonięcia:</div>
+                <div id="modal-answer-text" style="font-size: 16px; color: #008800; font-weight: bold;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+                <button class="btn-cancel" onclick="closeConfirmModal()">❌ Anuluj</button>
+                <button id="modal-confirm-btn" class="btn-confirm" onclick="confirmShowAnswer()">👁️ Tak, pokaż odpowiedź</button>
+            </div>
+        </div>
+    </div>
 
     <div class="admin-container">
         <h1>⚙️ Panel Sterowania</h1>
@@ -55,8 +129,22 @@
                     
                     <h3>4. Koniec licytacji - Pokaż pytanie</h3>
                     <!-- Ten select uzupełni się sam po losowaniu -->
-                    <select id="question-select"><option>Wylosuj najpierw kategorię...</option></select>
-                    <button class="btn-start" style="background:#00cc00;" onclick="showQuestion()">👁️ Wyświetl to pytanie</button>
+                    <select id="question-select"><option value="">Wylosuj najpierw kategorię...</option></select>
+                    
+                    <div id="answer-preview-box" style="margin: 8px 0; padding: 10px; background: #e8f4fd; border: 2px solid #0066ff; border-radius: 6px; font-size: 14px;">
+                        <span style="color: #0055aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">Odpowiedź do wybranego pytania:</span><br>
+                        <span id="answer-preview-text" style="color: #003366; font-size: 16px; font-weight: bold;">(Wybierz pytanie z listy powyżej)</span>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-start" style="background:#00cc00; margin-top:0; flex: 1;" onclick="showQuestion()">👁️ Pokaż pytanie</button>
+                        <button id="btn-toggle-answer" class="btn-start" style="background:#8800cc; margin-top:0; flex: 1;" onclick="toggleAnswer()">💡 Pokaż odpowiedź</button>
+                    </div>
+
+                    <div id="question-live-status" style="margin-top: 12px; padding: 10px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px; font-size: 13px;">
+                        <div style="margin-bottom: 4px;"><strong>Na ekranie widowni:</strong> <span id="live-question-text" style="color: #333;">(brak)</span></div>
+                        <div><strong>Odpowiedź na ekranie widowni:</strong> <span id="live-answer-status" style="font-weight: bold; color: #dc3545;">UKRYTA</span></div>
+                    </div>
                 </div>
             </div>
 
@@ -75,6 +163,7 @@
         const socket = io();
         const db = JSON.parse(document.getElementById('db-data').textContent);
         const qSelect = document.getElementById('question-select');
+        let lastGameState = null;
 
         const teamNames = {
             'niebiescy': 'Niebiescy', 'zieloni': 'Zieloni', 'zolci': 'Żółci', 
@@ -89,7 +178,117 @@
 
         function spinWheel() { socket.emit('admin_action', { action: 'spin_wheel' }); }
         function startRound() { socket.emit('admin_action', { action: 'start_round', amount: document.getElementById('entry-fee').value }); }
-        function showQuestion() { socket.emit('admin_action', { action: 'show_question', question: qSelect.value }); }
+        
+        function getSelectedQuestionAndAnswer() {
+            const selectedOpt = qSelect.options[qSelect.selectedIndex];
+            if (!selectedOpt || !selectedOpt.value) return { question: '', answer: '' };
+            
+            const question = selectedOpt.value;
+            let answer = selectedOpt.getAttribute('data-answer') || '';
+            
+            if (!answer && lastGameState && db[lastGameState.current_category]) {
+                const found = db[lastGameState.current_category].find(item => 
+                    (typeof item === 'object' ? item.query : item) === question
+                );
+                if (found && typeof found === 'object') {
+                    answer = found.answer || '';
+                }
+            }
+            return { question, answer };
+        }
+
+        function updateAnswerPreview() {
+            const previewText = document.getElementById('answer-preview-text');
+            const { question, answer } = getSelectedQuestionAndAnswer();
+            if (answer) {
+                previewText.innerText = answer;
+            } else if (question) {
+                previewText.innerText = '(Brak zdefiniowanej odpowiedzi)';
+            } else {
+                previewText.innerText = '(Wybierz pytanie z listy powyżej)';
+            }
+        }
+
+        qSelect.addEventListener('change', updateAnswerPreview);
+
+        function showQuestion() {
+            const { question, answer } = getSelectedQuestionAndAnswer();
+            if (!question) {
+                alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!');
+                return;
+            }
+            socket.emit('admin_action', { 
+                action: 'show_question', 
+                question: question,
+                answer: answer,
+                show_answer: false
+            });
+        }
+
+        function toggleAnswer() {
+            // Jeśli odpowiedź jest już widoczna na ekranie, ukryj bez okienka
+            if (lastGameState && lastGameState.show_answer) {
+                const { question, answer } = getSelectedQuestionAndAnswer();
+                socket.emit('admin_action', { 
+                    action: 'toggle_answer',
+                    question: question,
+                    answer: answer
+                });
+                return;
+            }
+
+            // Przed POKAZANIEM odpowiedzi otwieramy okienko potwierdzenia
+            const { question, answer } = getSelectedQuestionAndAnswer();
+            if (!question) {
+                alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!');
+                return;
+            }
+
+            document.getElementById('modal-question-text').innerText = question;
+            document.getElementById('modal-answer-text').innerText = answer || '(Brak zdefiniowanej odpowiedzi)';
+            document.getElementById('confirm-modal').style.display = 'flex';
+            setTimeout(() => {
+                const btn = document.getElementById('modal-confirm-btn');
+                if (btn) btn.focus();
+            }, 50);
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').style.display = 'none';
+        }
+
+        function confirmShowAnswer() {
+            closeConfirmModal();
+            const { question, answer } = getSelectedQuestionAndAnswer();
+            if (!lastGameState || !lastGameState.current_question) {
+                socket.emit('admin_action', { 
+                    action: 'show_question', 
+                    question: question,
+                    answer: answer,
+                    show_answer: true
+                });
+            } else {
+                socket.emit('admin_action', { 
+                    action: 'show_answer',
+                    question: question,
+                    answer: answer,
+                    show: true
+                });
+            }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeConfirmModal();
+            }
+        });
+
+        document.getElementById('confirm-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeConfirmModal();
+            }
+        });
+
         function wrongAnswer() { socket.emit('admin_action', { action: 'wrong_answer' }); }
 
         function sendAction(actionType, teamColor) {
@@ -101,15 +300,64 @@
         }
 
         socket.on('update_state', function(gameState) {
+            lastGameState = gameState;
             document.getElementById('admin-pool').innerText = gameState.pool;
             document.getElementById('current-cat-display').innerText = gameState.current_category;
 
             // Automatyczne wczytanie pytań dla wylosowanej kategorii
             if (db[gameState.current_category]) {
-                qSelect.innerHTML = '';
-                db[gameState.current_category].forEach(q => qSelect.add(new Option(q, q)));
+                if (qSelect.dataset.category !== gameState.current_category) {
+                    qSelect.dataset.category = gameState.current_category;
+                    qSelect.innerHTML = '';
+                    db[gameState.current_category].forEach(item => {
+                        const q = typeof item === 'object' ? item.query : item;
+                        const a = typeof item === 'object' ? item.answer : '';
+                        const opt = document.createElement('option');
+                        opt.value = q;
+                        opt.textContent = q;
+                        opt.setAttribute('data-answer', a);
+                        qSelect.appendChild(opt);
+                    });
+                    updateAnswerPreview();
+                }
             } else {
-                qSelect.innerHTML = '<option>Wylosuj najpierw kategorię...</option>';
+                qSelect.dataset.category = '';
+                qSelect.innerHTML = '<option value="">Wylosuj najpierw kategorię...</option>';
+                updateAnswerPreview();
+            }
+
+            // Aktualizacja statusu pytania i przycisku odpowiedzi
+            const btnToggle = document.getElementById('btn-toggle-answer');
+            const liveQuestion = document.getElementById('live-question-text');
+            const liveAnswerStatus = document.getElementById('live-answer-status');
+            const previewBox = document.getElementById('answer-preview-box');
+
+            if (gameState.current_question && gameState.current_question !== "") {
+                liveQuestion.innerText = gameState.current_question;
+                
+                if (gameState.show_answer) {
+                    btnToggle.innerText = '🙈 Ukryj odpowiedź';
+                    btnToggle.style.background = '#e60000';
+                    liveAnswerStatus.innerText = 'WIDOCZNA NA WIDOWNI (' + (gameState.current_answer || 'Brak treści') + ')';
+                    liveAnswerStatus.style.color = '#155724';
+                    previewBox.style.borderColor = '#28a745';
+                    previewBox.style.background = '#eafaf1';
+                } else {
+                    btnToggle.innerText = '💡 Pokaż odpowiedź';
+                    btnToggle.style.background = '#8800cc';
+                    liveAnswerStatus.innerText = 'UKRYTA (dostępna: ' + (gameState.current_answer || 'brak') + ')';
+                    liveAnswerStatus.style.color = '#856404';
+                    previewBox.style.borderColor = '#0066ff';
+                    previewBox.style.background = '#e8f4fd';
+                }
+            } else {
+                liveQuestion.innerText = '(brak pytania na ekranie)';
+                liveAnswerStatus.innerText = 'UKRYTA';
+                liveAnswerStatus.style.color = '#dc3545';
+                btnToggle.innerText = '💡 Pokaż odpowiedź';
+                btnToggle.style.background = '#8800cc';
+                previewBox.style.borderColor = '#0066ff';
+                previewBox.style.background = '#e8f4fd';
             }
 
             const container = document.getElementById('active-teams-controls');

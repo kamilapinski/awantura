@@ -49,6 +49,8 @@ socket.on('update_state', function(gameState) {
     const questionBox = document.getElementById('question-box');
     const poolSection = document.getElementById('pool-section');
     const teamsContainer = document.getElementById('teams-container');
+    const answerBox = document.getElementById('answer-box');
+    const answerText = document.getElementById('answer-text');
     
     const hasTeams = gameState.teams && Object.keys(gameState.teams).length > 0;
 
@@ -68,6 +70,7 @@ socket.on('update_state', function(gameState) {
         poolSection.classList.add('hidden');
         teamsContainer.classList.add('hidden');
         questionBox.classList.add('hidden');
+        if (answerBox) answerBox.classList.add('hidden');
     } else if (gameState.current_question !== "") {
         wheelWrapper.classList.add('hidden');
         poolSection.classList.remove('hidden');
@@ -75,10 +78,22 @@ socket.on('update_state', function(gameState) {
         questionBox.classList.remove('hidden');
         document.getElementById('category-title').innerText = gameState.current_category;
         document.getElementById('question').innerText = gameState.current_question;
+
+        if (answerBox && answerText) {
+            const hasAnswer = Boolean(gameState.current_answer && String(gameState.current_answer).trim() !== "");
+            if (Boolean(gameState.show_answer) && hasAnswer) {
+                answerText.innerText = gameState.current_answer;
+                answerBox.classList.remove('hidden');
+            } else {
+                answerBox.classList.add('hidden');
+                answerText.innerText = '';
+            }
+        }
     } else {
         wheelWrapper.classList.add('hidden');
         poolSection.classList.remove('hidden');
         teamsContainer.classList.remove('hidden');
+        if (answerBox) answerBox.classList.add('hidden');
         
         // PO WYLOSOWANIU: pokazujemy wylosowaną kategorię na środku/górze
         if (gameState.current_category && gameState.current_category !== "Nowa gra rozpoczęta!") {
