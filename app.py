@@ -53,8 +53,8 @@ QUESTIONS_DB = {
         {"query": "Czym zajmuje się Konferencja Episkopatu?", "answer": "Koordynacją działalności duszpasterskiej i podejmowaniem decyzji przez biskupów danego kraju"}
     ],
     "Czarna Skrzynka": [
-        {"query": "Co kryje się w czarnej skrzynce? (Pytanie specjalne)", "answer": "Niespodzianka przygotowana przez prowadzącego!"},
-        {"query": "Kto z drużyny zje plaster cytryny bez krzywienia się?", "answer": "Zadanie zręcznościowe dla wybranego uczestnika"}
+        {"query": "Co kryje się w czarnej skrzynce? (Zadanie)", "answer": "Niespodzianka przygotowana przez prowadzącego!"},
+        {"query": "Zadanie zręcznościowe", "answer": "Kto z drużyny zje plaster cytryny bez krzywienia się?"}
     ]
 }
 
@@ -66,7 +66,8 @@ game_state = {
     'current_question': "",
     'current_answer': "",
     'show_answer': False,
-    'is_spinning': False
+    'is_spinning': False,
+    'is_bidding': False
 }
 
 @app.route('/')
@@ -102,68 +103,108 @@ def handle_admin_action(data):
         game_state['current_answer'] = ""
         game_state['show_answer'] = False
         game_state['is_spinning'] = False
+        game_state['is_bidding'] = False
 
     elif action == 'spin_wheel':
+        if not game_state['teams']:
+            return
+            
         chosen_category = random.choice(list(QUESTIONS_DB.keys()))
         game_state['current_category'] = chosen_category
         game_state['current_question'] = ""
         game_state['current_answer'] = ""
         game_state['show_answer'] = False
         game_state['is_spinning'] = True
+        game_state['is_bidding'] = False
         socketio.emit('spin_animation', {'target_category': chosen_category})
 
     elif action == 'start_round':
-        game_state['is_spinning'] = False # Wyłączamy koło, wchodzi pula i licytacja
-        fee = amount
-        for t in game_state['teams']:
-            if game_state['teams'][t] >= fee:
-                game_state['teams'][t] -= fee
-                game_state['pool'] += fee
-            else:
-                game_state['pool'] += game_state['teams'][t]
-                game_state['teams'][t] = 0
-            game_state['bids'][t] = 0
-        game_state['current_question'] = "" # Pytania brak dopóki trwa licytacja
-        game_state['current_answer'] = ""
-        game_state['show_answer'] = False
+        if game_state['current_category'] not in ["Oczekiwanie na start...", "Nowa gra rozpoczęta!"]:
+            game_state['is_spinning'] = False 
+            game_state['is_bidding'] = True 
+            fee = amount
+            for t in game_state['teams']:
+                if game_state['teams'][t] >= fee:
+                    game_state['teams'][t] -= fee
+                    game_state['pool'] += fee
+                    game_state['bids'][t] = fee
+                else:
+                    actual_funds = game_state['teams'][t]
+                    game_state['pool'] += actual_funds
+                    game_state['bids'][t] = actual_funds
+                    game_state['teams'][t] = 0
+                    
+            game_state['current_question'] = "" 
+            game_state['current_answer'] = ""
+            game_state['show_answer'] = False
 
     elif action == 'bid' and team in game_state['teams']:
-        current_bid = game_state['bids'].get(team, 0)
-        delta = amount - current_bid 
-        if delta > 0 and game_state['teams'][team] >= delta:
-            game_state['teams'][team] -= delta
-            game_state['bids'][team] = amount
-            game_state['pool'] += delta
+        if game_state.get('is_bidding'):
+            current_bid = game_state['bids'].get(team, 0)
+            highest_bid = max(game_state['bids'].values()) if game_state['bids'] else 0
+            
+            if amount > highest_bid:
+                delta = amount - current_bid 
+                if delta > 0 and game_state['teams'][team] >= delta:
+                    game_state['teams'][team] -= delta
+                    game_state['bids'][team] = amount
+                    game_state['pool'] += delta
 
     elif action == 'all_in' and team in game_state['teams']:
-        available_funds = game_state['teams'][team]
-        current_bid = game_state['bids'].get(team, 0)
-        if available_funds > 0:
-            game_state['teams'][team] = 0
-            game_state['bids'][team] = current_bid + available_funds
-            game_state['pool'] += available_funds
+        if game_state.get('is_bidding'):
+            available_funds = game_state['teams'][team]
+            current_bid = game_state['bids'].get(team, 0)
+            highest_bid = max(game_state['bids'].values()) if game_state['bids'] else 0
+            
+            if available_funds > 0:
+                new_total = current_bid + available_funds
+                if new_total > highest_bid or new_total == current_bid + available_funds:
+                    game_state['teams'][team] = 0
+                    game_state['bids'][team] = new_total
+                    game_state['pool'] += available_funds
+                    game_state['is_bidding'] = False # VABANK KOŃCZY LICYTACJĘ
             
     elif action == 'add' and team in game_state['teams']:
         game_state['teams'][team] += amount
         
+    elif action == 'end_bidding':
+        game_state['is_bidding'] = False
+        
     elif action == 'win_pool' and team in game_state['teams']:
-        game_state['teams'][team] += game_state['pool']
-        game_state['pool'] = 0
-        for t in game_state['bids']:
-            game_state['bids'][t] = 0
-        game_state['current_question'] = f"Wygrywają {team.upper()}!"
-        game_state['current_answer'] = ""
-        game_state['show_answer'] = False
+        # Zabezpieczenie: Odpowiedź i wygrana są możliwe TYLKO po zakończeniu licytacji
+        if not game_state.get('is_bidding'):
+            current_bid = game_state['bids'].get(team, 0)
+            highest_bid = max(game_state['bids'].values()) if game_state['bids'] else 0
+            
+            if current_bid == highest_bid and highest_bid > 0:
+                if game_state['current_category'] == "Czarna Skrzynka":
+                    # KASA PRZEPADA! Zerujemy pulę
+                    game_state['pool'] = 0
+                    game_state['current_question'] = f"🎁 {team.upper()} ODBIERAJĄ CZARNĄ SKRZYNKĘ! 🎁"
+                else:
+                    # ZWYKŁE PYTANIE - przypisujemy pulę drużynie
+                    game_state['teams'][team] += game_state['pool']
+                    game_state['pool'] = 0
+                    game_state['current_question'] = f"✅ Poprawna odpowiedź! Wygrywają {team.upper()}!"
+                    
+                for t in game_state['bids']:
+                    game_state['bids'][t] = 0
+                
+                game_state['current_answer'] = ""
+                game_state['show_answer'] = False
 
     elif action == 'wrong_answer':
-        for t in game_state['bids']:
-            game_state['bids'][t] = 0
-        game_state['current_question'] = "ZŁA ODPOWIEDŹ! Pula przechodzi do kolejnego pytania!"
-        game_state['current_answer'] = ""
-        game_state['show_answer'] = False
+        # Zła odpowiedź możliwa też tylko gdy licytacja jest zakończona
+        if not game_state.get('is_bidding'):
+            for t in game_state['bids']:
+                game_state['bids'][t] = 0
+            game_state['current_question'] = "❌ ZŁA ODPOWIEDŹ! Pula przechodzi do kolejnego pytania!"
+            game_state['current_answer'] = ""
+            game_state['show_answer'] = False
             
     elif action == 'show_question':
         game_state['is_spinning'] = False
+        game_state['is_bidding'] = False 
         question = data.get('question', '')
         answer = data.get('answer', '')
         if not answer and question:

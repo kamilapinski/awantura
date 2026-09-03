@@ -8,74 +8,36 @@
         .admin-container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
         .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .section { padding: 15px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 5px; margin-bottom: 15px;}
-        .team-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 10px; background: white; border-left: 8px solid #333; }
+        .team-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 10px; background: white; border-left: 8px solid #333; transition: all 0.2s;}
         .checkbox-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;}
         select, input[type="number"], input[type="text"] { padding: 8px; font-size: 15px; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
         button { padding: 8px 12px; font-size: 14px; cursor: pointer; font-weight: bold; border-radius: 4px; border: none; margin-top: 5px; }
-        .btn-bid { background: #ffcccc; } .btn-add { background: #ccffcc; } .btn-win { background: #fff0b3; }
-        .btn-vabank { background: #e60000; color: white; } .btn-wrong { background: #555; color: white; }
-        .btn-start { background: #0066ff; color: white; width: 100%; padding: 15px; font-size: 16px;}
+        
+        .btn-bid { background: #ffe0b2; } 
+        .btn-add { background: #ccffcc; } 
+        .btn-sub { background: #ffb3b3; } 
+        .btn-vabank { background: #e60000; color: white; } 
+        
+        .btn-win { transition: all 0.2s; } 
+        .btn-win:not(:disabled):hover { filter: brightness(0.9); transform: scale(1.03); }
+        
+        .btn-wrong { transition: all 0.2s; }
+        
+        .btn-start { background: #0066ff; color: white; width: 100%; padding: 15px; font-size: 16px; transition: all 0.2s;}
         .db-data { display: none; }
         
-        /* Modal potwierdzenia */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.65);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .modal-box {
-            background: white;
-            padding: 24px;
-            border-radius: 10px;
-            max-width: 520px;
-            width: 90%;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            animation: modalScaleIn 0.2s ease-out;
-            border-top: 6px solid #8800cc;
-        }
-        @keyframes modalScaleIn {
-            from { opacity: 0; transform: scale(0.92); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .btn-cancel {
-            background: #6c757d;
-            color: white;
-            padding: 10px 18px;
-            font-size: 14px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-cancel:hover {
-            background: #5a6268;
-        }
-        .btn-confirm {
-            background: #28a745;
-            color: white;
-            padding: 10px 20px;
-            font-size: 14px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-confirm:hover {
-            background: #218838;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.65); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-box { background: white; padding: 24px; border-radius: 10px; max-width: 520px; width: 90%; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); animation: modalScaleIn 0.2s ease-out; border-top: 6px solid #8800cc; }
+        @keyframes modalScaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+        .btn-cancel { background: #6c757d; color: white; padding: 10px 18px; font-size: 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-cancel:hover { background: #5a6268; }
+        .btn-confirm { background: #28a745; color: white; padding: 10px 20px; font-size: 14px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-confirm:hover { background: #218838; }
     </style>
 </head>
 <body>
     <div id="db-data" class="db-data">{{ categories | tojson }}</div>
 
-    <!-- OKIENKO POTWIERDZENIA -->
     <div id="confirm-modal" class="modal-overlay" style="display: none;">
         <div class="modal-box">
             <h2 style="margin-top: 0; color: #222; font-size: 20px;">⚠️ Czy na pewno pokazać odpowiedź?</h2>
@@ -119,17 +81,18 @@
                 <div class="section">
                     <h3>2. Losowanie Kategorii</h3>
                     <p style="margin-top:0;">Wylosowano: <strong id="current-cat-display" style="color:#ff8800; font-size:18px;">Brak</strong></p>
-                    <button class="btn-start" style="background:#ff8800;" onclick="spinWheel()">🎲 Wylosuj losową kategorię z puli</button>
+                    <button id="btn-spin" class="btn-start" style="background:#ff8800;" onclick="spinWheel()">🎲 Wylosuj losową kategorię z puli</button>
                     <hr style="margin:15px 0;">
                     
                     <h3>3. Start rundy (Wpisowe)</h3>
                     Wpisowe: <input type="number" id="entry-fee" value="200" style="width: 100px;">
-                    <button class="btn-start" onclick="startRound()">💰 Pobierz wpisowe i start</button>
+                    <button class="btn-start" onclick="startRound()">💰 Pobierz wpisowe i zacznij licytację</button>
                     <hr style="margin:15px 0;">
                     
-                    <h3>4. Koniec licytacji - Pokaż pytanie</h3>
-                    <!-- Ten select uzupełni się sam po losowaniu -->
-                    <select id="question-select"><option value="">Wylosuj najpierw kategorię...</option></select>
+                    <h3>4. Zarządzanie Pytaniem</h3>
+                    <select id="question-select">
+                        <option value="">Wylosuj najpierw kategorię...</option>
+                    </select>
                     
                     <div id="answer-preview-box" style="margin: 8px 0; padding: 10px; background: #e8f4fd; border: 2px solid #0066ff; border-radius: 6px; font-size: 14px;">
                         <span style="color: #0055aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">Odpowiedź do wybranego pytania:</span><br>
@@ -151,19 +114,48 @@
             <div>
                 <div class="section">
                     <h3>5. Licytacja (Pula: <span id="admin-pool" style="color:red; font-size:24px;">0</span>)</h3>
+                    
+                    <!-- Przycisk Zakończania licytacji z dynamicznym wyglądem -->
+                    <button id="btn-end-bidding" class="btn-start" style="background:#cc0000; margin-top:0; margin-bottom:15px; width: 100%;" onclick="endBidding()">🛑 Zakończ licytację (Zablokuj stawki)</button>
+                    
                     <div id="active-teams-controls">Oczekuję na start...</div>
-                    <button class="btn-wrong" style="width:100%; padding:15px; margin-top:20px;" onclick="wrongAnswer()">❌ Zła odpowiedź (Zatrzymaj pulę)</button>
+                    
+                    <!-- Przycisk zlej odpowiedzi -->
+                    <button id="btn-wrong-answer" class="btn-wrong" style="width:100%; padding:15px; margin-top:10px;" onclick="wrongAnswer()">❌ Zła odpowiedź (Zatrzymaj pulę na stole)</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- SKRYPTY -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <script>
         const socket = io();
         const db = JSON.parse(document.getElementById('db-data').textContent);
         const qSelect = document.getElementById('question-select');
         let lastGameState = null;
+
+        window.lastPool = undefined;
+        window.lastScores = {};
+
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOut = progress * (2 - progress);
+                const currentVal = Math.round(start + (end - start) * easeOut);
+                if (element && document.body.contains(element)) {
+                    element.innerText = currentVal;
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        element.innerText = end;
+                    }
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
 
         const teamNames = {
             'niebiescy': 'Niebiescy', 'zieloni': 'Zieloni', 'zolci': 'Żółci', 
@@ -173,26 +165,44 @@
 
         function setupGame() {
             const selected = Array.from(document.querySelectorAll('.team-check:checked')).map(cb => cb.value);
-            socket.emit('admin_action', { action: 'setup', teams: selected, amount: document.getElementById('start-amount').value });
+            socket.emit('admin_action', { 
+                action: 'setup', 
+                teams: selected, 
+                amount: document.getElementById('start-amount').value 
+            });
         }
 
-        function spinWheel() { socket.emit('admin_action', { action: 'spin_wheel' }); }
-        function startRound() { socket.emit('admin_action', { action: 'start_round', amount: document.getElementById('entry-fee').value }); }
+        function spinWheel() { 
+            if (!lastGameState || !lastGameState.teams || Object.keys(lastGameState.teams).length === 0) {
+                alert("Zablokowane: Najpierw musisz odpalić nową grę z wybranymi drużynami!");
+                return;
+            }
+            socket.emit('admin_action', { action: 'spin_wheel' }); 
+        }
+        
+        function startRound() { 
+            if (!lastGameState || lastGameState.current_category === "Oczekiwanie na start..." || lastGameState.current_category === "Nowa gra rozpoczęta!") {
+                alert("Zablokowane: Najpierw musisz wylosować kategorię!");
+                return;
+            }
+            socket.emit('admin_action', { 
+                action: 'start_round', 
+                amount: document.getElementById('entry-fee').value 
+            }); 
+        }
         
         function getSelectedQuestionAndAnswer() {
             const selectedOpt = qSelect.options[qSelect.selectedIndex];
-            if (!selectedOpt || !selectedOpt.value) return { question: '', answer: '' };
-            
+            if (!selectedOpt || !selectedOpt.value) {
+                return { question: '', answer: '' };
+            }
             const question = selectedOpt.value;
             let answer = selectedOpt.getAttribute('data-answer') || '';
-            
             if (!answer && lastGameState && db[lastGameState.current_category]) {
-                const found = db[lastGameState.current_category].find(item => 
-                    (typeof item === 'object' ? item.query : item) === question
-                );
-                if (found && typeof found === 'object') {
-                    answer = found.answer || '';
-                }
+                const found = db[lastGameState.current_category].find(item => {
+                    return (typeof item === 'object' ? item.query : item) === question;
+                });
+                if (found && typeof found === 'object') { answer = found.answer || ''; }
             }
             return { question, answer };
         }
@@ -200,111 +210,97 @@
         function updateAnswerPreview() {
             const previewText = document.getElementById('answer-preview-text');
             const { question, answer } = getSelectedQuestionAndAnswer();
-            if (answer) {
-                previewText.innerText = answer;
-            } else if (question) {
-                previewText.innerText = '(Brak zdefiniowanej odpowiedzi)';
-            } else {
-                previewText.innerText = '(Wybierz pytanie z listy powyżej)';
-            }
+            if (answer) { previewText.innerText = answer; } 
+            else if (question) { previewText.innerText = '(Brak zdefiniowanej odpowiedzi)'; } 
+            else { previewText.innerText = '(Wybierz pytanie z listy powyżej)'; }
         }
 
         qSelect.addEventListener('change', updateAnswerPreview);
 
+        function endBidding() { 
+            socket.emit('admin_action', { action: 'end_bidding' }); 
+        }
+
         function showQuestion() {
             const { question, answer } = getSelectedQuestionAndAnswer();
-            if (!question) {
-                alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!');
-                return;
-            }
-            socket.emit('admin_action', { 
-                action: 'show_question', 
-                question: question,
-                answer: answer,
-                show_answer: false
-            });
+            if (!question) { alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!'); return; }
+            socket.emit('admin_action', { action: 'show_question', question: question, answer: answer, show_answer: false });
         }
 
         function toggleAnswer() {
-            // Jeśli odpowiedź jest już widoczna na ekranie, ukryj bez okienka
             if (lastGameState && lastGameState.show_answer) {
                 const { question, answer } = getSelectedQuestionAndAnswer();
-                socket.emit('admin_action', { 
-                    action: 'toggle_answer',
-                    question: question,
-                    answer: answer
-                });
+                socket.emit('admin_action', { action: 'toggle_answer', question: question, answer: answer });
                 return;
             }
-
-            // Przed POKAZANIEM odpowiedzi otwieramy okienko potwierdzenia
+            
             const { question, answer } = getSelectedQuestionAndAnswer();
-            if (!question) {
-                alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!');
-                return;
-            }
-
+            if (!question) { alert('Najpierw wylosuj kategorię i wybierz pytanie z listy!'); return; }
+            
             document.getElementById('modal-question-text').innerText = question;
             document.getElementById('modal-answer-text').innerText = answer || '(Brak zdefiniowanej odpowiedzi)';
             document.getElementById('confirm-modal').style.display = 'flex';
-            setTimeout(() => {
-                const btn = document.getElementById('modal-confirm-btn');
-                if (btn) btn.focus();
-            }, 50);
+            setTimeout(() => { const btn = document.getElementById('modal-confirm-btn'); if (btn) btn.focus(); }, 50);
         }
 
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').style.display = 'none';
-        }
-
+        function closeConfirmModal() { document.getElementById('confirm-modal').style.display = 'none'; }
+        
         function confirmShowAnswer() {
             closeConfirmModal();
             const { question, answer } = getSelectedQuestionAndAnswer();
             if (!lastGameState || !lastGameState.current_question) {
-                socket.emit('admin_action', { 
-                    action: 'show_question', 
-                    question: question,
-                    answer: answer,
-                    show_answer: true
-                });
+                socket.emit('admin_action', { action: 'show_question', question: question, answer: answer, show_answer: true });
             } else {
-                socket.emit('admin_action', { 
-                    action: 'show_answer',
-                    question: question,
-                    answer: answer,
-                    show: true
-                });
+                socket.emit('admin_action', { action: 'show_answer', question: question, answer: answer, show: true });
             }
         }
 
-        window.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeConfirmModal();
-            }
-        });
-
-        document.getElementById('confirm-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeConfirmModal();
-            }
-        });
-
+        window.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeConfirmModal(); });
+        document.getElementById('confirm-modal').addEventListener('click', function(e) { if (e.target === this) closeConfirmModal(); });
+        
         function wrongAnswer() { socket.emit('admin_action', { action: 'wrong_answer' }); }
 
-        function sendAction(actionType, teamColor) {
+        function sendAction(actionType, teamColor, explicitAmount = null) {
             let val = 0;
-            if(actionType === 'bid' || actionType === 'add') {
-                val = document.getElementById('amount-' + teamColor).value;
+            if ((actionType === 'bid' || actionType === 'all_in') && lastGameState && !lastGameState.is_bidding) {
+                alert('Zablokowane: Licytacja nie jest w tym momencie aktywna! Najpierw pobierz wpisowe i zacznij rundę.');
+                return;
+            }
+            if (explicitAmount !== null) {
+                val = explicitAmount;
+            } else if(actionType === 'bid' || actionType === 'add') {
+                val = parseInt(document.getElementById('amount-' + teamColor).value) || 0;
+                if (actionType === 'bid' && lastGameState) {
+                    let maxBid = 0;
+                    for (const b of Object.values(lastGameState.bids)) { if (b > maxBid) maxBid = b; }
+                    if (val <= maxBid) {
+                        alert(`Licytacja odrzucona: musisz przebić obecną najwyższą stawkę (${maxBid})!`); return; 
+                    }
+                }
             }
             socket.emit('admin_action', { action: actionType, team: teamColor, amount: val });
         }
 
         socket.on('update_state', function(gameState) {
             lastGameState = gameState;
-            document.getElementById('admin-pool').innerText = gameState.pool;
+            
+            const adminPoolEl = document.getElementById('admin-pool');
+            if (window.lastPool !== undefined && window.lastPool !== gameState.pool) {
+                animateValue(adminPoolEl, window.lastPool, gameState.pool, 1000);
+            } else {
+                adminPoolEl.innerText = gameState.pool;
+            }
+            window.lastPool = gameState.pool;
+            
             document.getElementById('current-cat-display').innerText = gameState.current_category;
 
-            // Automatyczne wczytanie pytań dla wylosowanej kategorii
+            const btnSpin = document.getElementById('btn-spin');
+            if (gameState.teams && Object.keys(gameState.teams).length > 0) {
+                btnSpin.disabled = false; btnSpin.style.background = '#ff8800'; btnSpin.style.color = 'white'; btnSpin.style.cursor = 'pointer'; btnSpin.title = "Wylosuj kategorię";
+            } else {
+                btnSpin.disabled = true; btnSpin.style.background = '#e0e0e0'; btnSpin.style.color = '#999'; btnSpin.style.cursor = 'not-allowed'; btnSpin.title = "Zablokowane: Najpierw odpal nową grę!";
+            }
+
             if (db[gameState.current_category]) {
                 if (qSelect.dataset.category !== gameState.current_category) {
                     qSelect.dataset.category = gameState.current_category;
@@ -312,21 +308,14 @@
                     db[gameState.current_category].forEach(item => {
                         const q = typeof item === 'object' ? item.query : item;
                         const a = typeof item === 'object' ? item.answer : '';
-                        const opt = document.createElement('option');
-                        opt.value = q;
-                        opt.textContent = q;
-                        opt.setAttribute('data-answer', a);
-                        qSelect.appendChild(opt);
+                        const opt = document.createElement('option'); opt.value = q; opt.textContent = q; opt.setAttribute('data-answer', a); qSelect.appendChild(opt);
                     });
                     updateAnswerPreview();
                 }
             } else {
-                qSelect.dataset.category = '';
-                qSelect.innerHTML = '<option value="">Wylosuj najpierw kategorię...</option>';
-                updateAnswerPreview();
+                qSelect.dataset.category = ''; qSelect.innerHTML = '<option value="">Wylosuj najpierw kategorię...</option>'; updateAnswerPreview();
             }
 
-            // Aktualizacja statusu pytania i przycisku odpowiedzi
             const btnToggle = document.getElementById('btn-toggle-answer');
             const liveQuestion = document.getElementById('live-question-text');
             const liveAnswerStatus = document.getElementById('live-answer-status');
@@ -334,55 +323,137 @@
 
             if (gameState.current_question && gameState.current_question !== "") {
                 liveQuestion.innerText = gameState.current_question;
-                
                 if (gameState.show_answer) {
-                    btnToggle.innerText = '🙈 Ukryj odpowiedź';
-                    btnToggle.style.background = '#e60000';
-                    liveAnswerStatus.innerText = 'WIDOCZNA NA WIDOWNI (' + (gameState.current_answer || 'Brak treści') + ')';
-                    liveAnswerStatus.style.color = '#155724';
-                    previewBox.style.borderColor = '#28a745';
-                    previewBox.style.background = '#eafaf1';
+                    btnToggle.innerText = '🙈 Ukryj odpowiedź'; btnToggle.style.background = '#e60000';
+                    liveAnswerStatus.innerText = 'WIDOCZNA NA WIDOWNI (' + (gameState.current_answer || 'Brak treści') + ')'; liveAnswerStatus.style.color = '#155724';
+                    previewBox.style.borderColor = '#28a745'; previewBox.style.background = '#eafaf1';
                 } else {
-                    btnToggle.innerText = '💡 Pokaż odpowiedź';
-                    btnToggle.style.background = '#8800cc';
-                    liveAnswerStatus.innerText = 'UKRYTA (dostępna: ' + (gameState.current_answer || 'brak') + ')';
-                    liveAnswerStatus.style.color = '#856404';
-                    previewBox.style.borderColor = '#0066ff';
-                    previewBox.style.background = '#e8f4fd';
+                    btnToggle.innerText = '💡 Pokaż odpowiedź'; btnToggle.style.background = '#8800cc';
+                    liveAnswerStatus.innerText = 'UKRYTA (dostępna: ' + (gameState.current_answer || 'brak') + ')'; liveAnswerStatus.style.color = '#856404';
+                    previewBox.style.borderColor = '#0066ff'; previewBox.style.background = '#e8f4fd';
                 }
             } else {
-                liveQuestion.innerText = '(brak pytania na ekranie)';
-                liveAnswerStatus.innerText = 'UKRYTA';
-                liveAnswerStatus.style.color = '#dc3545';
-                btnToggle.innerText = '💡 Pokaż odpowiedź';
-                btnToggle.style.background = '#8800cc';
-                previewBox.style.borderColor = '#0066ff';
-                previewBox.style.background = '#e8f4fd';
+                liveQuestion.innerText = '(brak pytania na ekranie)'; liveAnswerStatus.innerText = 'UKRYTA'; liveAnswerStatus.style.color = '#dc3545';
+                btnToggle.innerText = '💡 Pokaż odpowiedź'; btnToggle.style.background = '#8800cc'; previewBox.style.borderColor = '#0066ff'; previewBox.style.background = '#e8f4fd';
             }
 
+            let maxBid = 0;
+            for (const b of Object.values(gameState.bids)) { if (b > maxBid) maxBid = b; }
+
+            // GŁÓWNA LOGIKA ZABEZPIECZAJĄCA PRZYCISKI FAZY ODPOWIEDZI
+            const isBiddingActive = gameState.is_bidding;
+            const btnEndBidding = document.getElementById('btn-end-bidding');
+            const btnWrongAnswer = document.getElementById('btn-wrong-answer');
+
+            if (isBiddingActive) {
+                // Trwa licytacja - admin może ją przerwać
+                btnEndBidding.disabled = false;
+                btnEndBidding.style.background = '#cc0000';
+                btnEndBidding.style.color = 'white';
+                btnEndBidding.innerText = '🛑 Zakończ licytację (Zablokuj stawki)';
+                btnEndBidding.style.cursor = 'pointer';
+
+                // Trwa licytacja - nikt nie może udzielić "Złej odpowiedzi" na pytanie, którego jeszcze nie ma
+                btnWrongAnswer.disabled = true;
+                btnWrongAnswer.style.background = '#e0e0e0';
+                btnWrongAnswer.style.color = '#999';
+                btnWrongAnswer.style.cursor = 'not-allowed';
+            } else {
+                // Licytacja się skończyła
+                btnEndBidding.disabled = true;
+                btnEndBidding.style.background = '#e0e0e0';
+                btnEndBidding.style.color = '#999';
+                btnEndBidding.innerText = '🔒 Licytacja zakończona';
+                btnEndBidding.style.cursor = 'not-allowed';
+
+                // Jeśli ktoś w ogóle licytował, można uznać mu błąd
+                if (maxBid > 0) {
+                    btnWrongAnswer.disabled = false;
+                    btnWrongAnswer.style.background = '#555';
+                    btnWrongAnswer.style.color = 'white';
+                    btnWrongAnswer.style.cursor = 'pointer';
+                } else {
+                    btnWrongAnswer.disabled = true;
+                    btnWrongAnswer.style.background = '#e0e0e0';
+                    btnWrongAnswer.style.color = '#999';
+                    btnWrongAnswer.style.cursor = 'not-allowed';
+                }
+            }
+
+            const teamsWithMaxBid = Object.values(gameState.bids).filter(b => b === maxBid).length;
             const container = document.getElementById('active-teams-controls');
             container.innerHTML = '';
+            let animationsToRun = [];
+
             for (const [teamId, score] of Object.entries(gameState.teams)) {
                 const bid = gameState.bids[teamId] || 0;
-                const suggested = bid > 0 ? bid + 100 : 100;
+                const suggested = maxBid > 0 ? maxBid + 100 : 100;
+                
+                // LIDER = Zwyciężył licytację po jej zakończeniu
+                const isLeader = bid === maxBid && maxBid > 0 && !isBiddingActive;
+                
+                const borderStyle = isLeader 
+                    ? 'border: 3px solid #ffaa00; background: #fffde7; box-shadow: 0 0 10px rgba(255,170,0,0.4); transform: scale(1.02); z-index: 10; position: relative;' 
+                    : 'border-left: 8px solid #333; background: white;';
+                
+                let winBtnHTML = '';
+                if (isBiddingActive) {
+                    // Blokada wygranej na etapie licytowania
+                    winBtnHTML = `<button class="btn-win" style="background:#e0e0e0; color:#999; cursor:not-allowed;" disabled title="Zakończ licytację, aby móc przyznać pulę">⏳ Trwa licytacja...</button>`;
+                } else {
+                    const isBlackBox = gameState.current_category === "Czarna Skrzynka";
+                    const winLabel = isBlackBox ? "🎁 Odbiera Skrzynkę" : "✅ Dobra odp. (+Pula)";
+                    
+                    if (isLeader) {
+                        winBtnHTML = `<button class="btn-win" style="background:#28a745; color:white; text-shadow:none; padding:10px;" onclick="sendAction('win_pool', '${teamId}')">${winLabel}</button>`;
+                    } else {
+                        winBtnHTML = `<button class="btn-win" style="background:#e0e0e0; color:#999; cursor:not-allowed;" disabled>${winLabel}</button>`;
+                    }
+                }
+                
+                const bidBtnHTML = isBiddingActive 
+                    ? `<button class="btn-bid" onclick="sendAction('bid', '${teamId}')">Podbij</button>` 
+                    : `<button class="btn-bid" style="background:#e0e0e0; color:#999; cursor:not-allowed;" disabled>Podbij</button>`;
+                
+                const vabankBtnHTML = isBiddingActive 
+                    ? `<button class="btn-vabank" style="width:100%" onclick="sendAction('all_in', '${teamId}')">VABANK</button>` 
+                    : `<button class="btn-vabank" style="width:100%; background:#e0e0e0; color:#999; cursor:not-allowed;" disabled>VABANK</button>`;
+
+                const prevScore = window.lastScores[teamId] !== undefined ? window.lastScores[teamId] : score;
+                let scoreColor = "color:black;";
+                if (score > prevScore) scoreColor = "color:#28a745; text-shadow: 0 0 4px #28a745;";
+                else if (score < prevScore) scoreColor = "color:#dc3545; text-shadow: 0 0 4px #dc3545;";
+
                 container.innerHTML += `
-                    <div class="team-controls">
+                    <div class="team-controls" style="${borderStyle}">
                         <div style="width: 130px;">
                             <strong>${teamNames[teamId]}</strong><br>
-                            Konto: <b>${score}</b><br>Stół: <b style="color:red">${bid}</b>
+                            Konto: <b id="admin-score-${teamId}" style="${scoreColor}">${prevScore}</b><br>Stół: <b style="color:red">${bid}</b>
                         </div>
                         <div style="width:90px">
                             <input type="number" id="amount-${teamId}" value="${suggested}">
-                            <button class="btn-vabank" style="width:100%" onclick="sendAction('all_in', '${teamId}')">VABANK</button>
+                            ${vabankBtnHTML}
                         </div>
                         <div style="display:flex; flex-direction:column; gap:5px; margin-left:10px;">
-                            <button class="btn-bid" onclick="sendAction('bid', '${teamId}')">Podbij</button>
-                            <button class="btn-add" onclick="sendAction('add', '${teamId}')">+100</button>
-                            <button class="btn-win" onclick="sendAction('win_pool', '${teamId}')">🏆 Wygrywa</button>
+                            ${bidBtnHTML}
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-add" style="flex:1; padding: 8px 0;" onclick="sendAction('add', '${teamId}', 100)" title="Dodaj 100 do konta">+100</button>
+                                <button class="btn-sub" style="flex:1; padding: 8px 0;" onclick="sendAction('add', '${teamId}', -100)" title="Odejmij 100 z konta">-100</button>
+                            </div>
+                            ${winBtnHTML}
                         </div>
                     </div>
                 `;
+                
+                if (prevScore !== score) {
+                    animationsToRun.push({ id: `admin-score-${teamId}`, start: prevScore, end: score });
+                }
+                window.lastScores[teamId] = score;
             }
+
+            animationsToRun.forEach(anim => { 
+                animateValue(document.getElementById(anim.id), anim.start, anim.end, 1000); 
+            });
         });
     </script>
 </body>
