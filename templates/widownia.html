@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Awantura o kasę - Widownia</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=6">
 </head>
 <body>
     <div class="container">
-        <!-- EKRAN STARTOWY / LOGO -->
         <div id="start-screen" class="start-screen hidden">
             <h1 class="game-title">AWANTURA O KASĘ</h1>
             <h2 class="game-subtitle">Liturgiczna Służba Ołtarza<br>Archidiecezji Białostockiej</h2>
             <div class="start-info">Oczekiwanie na rozpoczęcie gry przez administratora...</div>
         </div>
 
-        <!-- GŁÓWNA GRA -->
         <div id="game-content" class="game-content">
             <div class="header-section">
                 <!-- WIELKIE KOŁO FORTUNY -->
@@ -37,18 +35,16 @@
                 </div>
             </div>
             
-            <!-- PULA NA STOLE -->
             <div id="pool-section" class="pool-section">
                 <h2>PULA NA STOLE</h2>
                 <div id="pool" class="pool-amount">0</div>
             </div>
 
-            <!-- DRUŻYNY -->
             <div id="teams-container" class="teams-container"></div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}?v=2"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=6"></script>
 </body>
 </html>
